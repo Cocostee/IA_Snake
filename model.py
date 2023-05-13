@@ -4,59 +4,55 @@ import torch.optim as optim
 import torch.nn.functional as F
 import os
 
-
 class Linear_Qnet(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self,inputSize,hiddenSize,outputSize):
         super().__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+        self.linear1=nn.Linear(inputSize,hiddenSize)
+        self.linear2=nn.Linear(hiddenSize,outputSize)
 
-    def forward(self, x):
+    def forward(self,x):
         x = F.relu(self.linear1(x))
-        x = self.linear2(x)
+        x= self.linear2(x)
         return x
 
-    def save(self, file_name='model.pth'):
-        model_folder_path = './model'
-        if not os.path.exists(model_folder_path):
-            os.makedirs(model_folder_path)
-
-        file_name = os.path.join(model_folder_path, file_name)
-        torch.save(self.state_dict(), file_name)
-
+    def save(self,fileName='model.pth'):
+        modelFolder='./model'
+        if not os.path.exists(modelFolder):
+            os.makedirs(modelFolder)
+        fileName=os.path.join(modelFolder,fileName)
+        torch.save(self.state_dict(),fileName)
 
 class QTrainer:
-    def __init__(self, model, lr, gamma):
-        self.model = model
-        self.lr = lr
-        self.gamma = gamma
-        self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
-        self.criterion = nn.MSELoss()
+    def __init__(self,model,lr,gamma):
+        self.lr=lr
+        self.gamma=gamma
+        self.model=model
+        self.optimizer = optim.Adam(model.parameters(),lr=self.lr)
+        self.criterion= nn.MSELoss()
 
-    def train_step(self, state, action, reward, next_state, done):
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
-        done = torch.tensor(done, dtype=torch.float)
-
-        if len(state.shape) == 1:
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = torch.unsqueeze(done, 0)
-
-        pred = self.model(state)
-        target = pred.clone()
+    def trainStep(self,state,move,reward,nextState,done):
+        state=torch.tensor(state,dtype=torch.float)
+        nextState=torch.tensor(nextState,dtype=torch.float)
+        move=torch.tensor(move ,dtype=torch.long)
+        reward=torch.tensor(reward,dtype=torch.float)
+        if len(state.shape)==1:
+            state=torch.unsqueeze(state,0)
+            nextState=torch.unsqueeze(nextState,0)
+            move=torch.unsqueeze(move,0)
+            reward=torch.unsqueeze(reward,0)
+            done= (done,)
+        pred=self.model(state)
+        target= pred.clone()
         for idx in range(len(done)):
-            Q_new = reward[idx]
+            Q_new=reward[idx]
             if not done[idx]:
-                Q_new = reward[idx] + self.gamma * \
-                    torch.max(self.model(next_state[idx]))
-            target[idx][action[idx]] = Q_new
+                Q_new=reward[idx]+self.gamma * torch.max(self.model(nextState[idx]))
+            target[idx][torch.argmax(move[idx]).item()] = Q_new
         self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
+        loss=self.criterion(target,pred)
         loss.backward()
         self.optimizer.step()
+
+
+
 
