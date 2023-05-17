@@ -28,7 +28,7 @@ Bleu2=(0,100,255)
 Noir=(0,0,0)
 
 Taille= 20
-Speed=50
+Speed=1000
 class SnakeAI:
 
     def __init__(self,longueur=640,largeur=480):
