@@ -5,19 +5,23 @@ from collections import deque
 from game import SnakeAI,Direction,Point
 from model import Linear_Qnet,QTrainer
 from helper import plot
-MaxMemory=100_00
-BATCH_SIZE=1000
-LearningRate=0.001
+
+MaxMemory = 1_000_000  # Augmenter la taille de la mémoire
+BATCH_SIZE = 5_000  # Augmenter la taille du batch
+LearningRate = 0.0001  # Réduire le taux d'apprentissage
+
 
 class Agent:
 
     def __init__(self):
-        self.n_games=0
-        self.epsilon=0 #randomness
-        self.gamma=0.9 #discount rate
-        self.memoire=deque(maxlen=MaxMemory) #Vire les premiers elements quand depasse memoire
-        self.model = Linear_Qnet(11,256,3)
-        self.trainer = QTrainer(self.model,lr=LearningRate,gamma=self.gamma)
+        self.n_games = 0
+        self.epsilon = 1.0  # Randomness initial élevé
+        self.epsilon_decay = 0.995  # Facteur de décroissance de l'epsilon
+        self.epsilon_min = 0.01  # Epsilon minimum
+        self.gamma = 0.95  # Taux d'escompte
+        self.memoire = deque(maxlen=MaxMemory)
+        self.model = Linear_Qnet(11, 16384, 3)  # Augmenter la taille de la couche cachée
+        self.trainer = QTrainer(self.model, lr=LearningRate, gamma=self.gamma)
         #TODO:model,trainer
 
     def getstate(self,game):
